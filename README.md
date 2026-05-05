@@ -10,7 +10,7 @@ A Swift Package that bridges the [Context Fabric](https://context-fabric.ai/docs
 
 ## Bootstrap
 
-The embedded `Python.xcframework` must be built before `swift build` will succeed. Run once per machine:
+The embedded `Python.xcframework` must exist before `swift build` will succeed. Run once per machine:
 
 ```bash
 make bootstrap
@@ -18,7 +18,7 @@ make bootstrap
 
 This chains four steps:
 1. Downloads the BeeWare Python 3.13 archive
-2. Extracts `Python.xcframework` (the stdlib lives inside it)
+2. Extracts `Python.xcframework` (stdlib lives inside it)
 3. Installs `context-fabric` (+ `numpy`, `pyyaml`) into the embedded `site-packages`
 4. Re-signs all `.so` extension modules and the framework (ad-hoc by default)
 
@@ -30,28 +30,117 @@ make bootstrap SIGN_IDENTITY="Apple Development: Your Name (TEAMID)"
 
 ## Usage
 
+`Fabric.init(path:)` throws if the corpus cannot be loaded. All namespaces are available as properties on the returned instance.
+
 ```swift
 import ContextFabricKit
 
-// Initialize the embedded Python runtime once, before any cfabric calls.
-// In an app this is automatic; in tests supply an explicit path.
-PythonRuntime.initialize()
-
-// Load a corpus and query it.
-let fabric = Fabric(path: "/path/to/corpus")
-let results = fabric.search("word")
-for node in results {
-    print(fabric.text(for: node))
-}
+let fabric = try Fabric(path: "/path/to/corpus")
 ```
 
-`Fabric.init(path:)` calls `PythonRuntime.initialize()` automatically, so explicit initialization is only needed when you want to bootstrap Python earlier or supply a custom `pythonHome:`.
+### Feature access — `F`
+
+```swift
+// Value of a feature for a specific node
+let pos: FeatureValue? = fabric.F["pos"].value(of: node)   // .string("verb")
+let num: FeatureValue? = fabric.F["g_word_n"].value(of: node) // .int(42)
+
+// All nodes where a feature equals a value
+let verbs: [Node] = fabric.F["pos"].nodes(for: "verb")
+
+// Frequency distribution
+let freq: [(FeatureValue, Int)] = fabric.F["pos"].frequencyList()
+
+// Iterate all (node, value) pairs
+for (node, value) in fabric.F["otype"].items() { ... }
+```
+
+### Edge feature access — `E`
+
+```swift
+// Slot nodes contained in a phrase (oslots is the standard containment edge)
+let slots: [Node] = fabric.E["oslots"].from(phraseNode)
+
+// Reverse: which phrases contain this slot?
+let parents: [Node] = fabric.E["oslots"].to(slotNode)
+
+// For valued edges, keep the edge value
+let valued: [(Node, FeatureValue?)] = fabric.E["mother"].valuesFrom(node)
+```
+
+### Locality navigation — `L`
+
+All methods return nodes in canonical order. The `type:` parameter filters to a single node type.
+
+```swift
+let phrases:  [Node] = fabric.L.up(wordNode, type: "phrase")
+let words:    [Node] = fabric.L.down(phraseNode, type: "word")
+let siblings: [Node] = fabric.L.intersecting(wordNode, type: "word")
+let prev:     [Node] = fabric.L.previous(clauseNode, type: "clause")
+let next:     [Node] = fabric.L.next(clauseNode, type: "clause")
+```
+
+### Text extraction — `T`
+
+```swift
+// Render a single node or a sequence of nodes
+let text: String = fabric.T.text(of: verseNode)
+let orig: String = fabric.T.text(of: wordNode, format: "text-orig-full")
+let span: String = fabric.T.text(of: [word1, word2, word3])
+
+// Section headings (e.g. ["Genesis", "1", "1"] for Gen 1:1)
+let heading: [String] = fabric.T.section(from: wordNode)
+let node:    Node?    = fabric.T.node(from: ["Genesis", "1", "1"])
+```
+
+### Pattern search — `S`
+
+Templates use [Text-Fabric search syntax](https://annotation.github.io/text-fabric/tf/about/searchusage.html). Indentation expresses embedding; feature constraints follow the node type on the same line.
+
+```swift
+let results: [[Node]] = fabric.S.search("""
+    phrase
+       word pos=verb
+       word pos=noun
+""")
+
+// Each result is [phraseNode, verbNode, nounNode]
+for result in results {
+    print(fabric.T.text(of: result[0]))  // phrase text
+    print(fabric.S.glean(result))        // section + text summary
+}
+
+// Cap result count or supply named node sets
+let limited = fabric.S.search("word pos=verb", limit: 100)
+let scoped  = fabric.S.search("word n:nodeSet", sets: ["nodeSet": myNodes])
+```
+
+### Node iteration — `N`
+
+```swift
+// All nodes in canonical order (can be millions — prefer nodes(ofType:) or S.search)
+let all: [Node] = fabric.N.walk()
+
+// Sort an arbitrary collection of nodes
+let sorted: [Node] = fabric.N.sort([node3, node1, node2])
+```
+
+### Corpus introspection
+
+```swift
+// Shortcut: all nodes of a given type via the otype feature index
+let words: [Node] = fabric.nodes(ofType: "word")
+
+let nodeFeatures: [String] = fabric.loadedFeatureNames()
+let edgeFeatures: [String] = fabric.loadedEdgeFeatureNames()
+fabric.ensureLoaded(["gloss", "gender"])
+```
 
 ## Adding to an App
 
 1. Add this package as a dependency in Xcode or `Package.swift`.
-2. In your app target's **Frameworks, Libraries, and Embedded Content**, add `Python.xcframework` (from `Artifacts/`) and set it to **Do Not Embed** — Xcode embeds it automatically when it comes from an SPM binary target.
-3. Add a **Run Script** Build Phase to re-sign the copied framework:
+2. In your app target's **Frameworks, Libraries, and Embedded Content**, add `Python.xcframework` (from `Artifacts/`) and set it to **Do Not Embed** — Xcode embeds it automatically via the SPM binary target.
+3. Add a **Run Script** Build Phase to re-sign the copied framework after Xcode processes it:
 
 ```bash
 find "$CODESIGNING_FOLDER_PATH/Contents/Frameworks/Python.framework" \
