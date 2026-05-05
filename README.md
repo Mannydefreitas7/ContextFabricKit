@@ -1,6 +1,30 @@
-# ContextFabricKit
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Context-Fabric/context-fabric/master/assets/fabric_tan_mark.svg" width="110" alt="Context Fabric" />
+</p>
 
-A Swift Package that bridges the [Context Fabric](https://context-fabric.ai/docs) Python library to Swift. It embeds a signed Python 3.13 interpreter (via [BeeWare Python-Apple-support](https://github.com/beeware/python-apple-support)) so macOS apps can run `cfabric` corpus queries natively — including App Store distribution.
+<h1 align="center">ContextFabricKit</h1>
+
+<p align="center">
+  Swift Package · bridges the <a href="https://context-fabric.ai/docs">Context Fabric</a> Python library to native macOS apps
+</p>
+
+<p align="center">
+  <a href="https://swift.org/package-manager">
+    <img src="https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?logo=swift&logoColor=white" alt="Swift Package Manager" />
+  </a>
+  <a href="https://www.swift.org">
+    <img src="https://img.shields.io/badge/Swift-6.0-orange?logo=swift&logoColor=white" alt="Swift 6.0" />
+  </a>
+  <img src="https://img.shields.io/badge/platform-macOS_13%2B-blue?logo=apple&logoColor=white" alt="macOS 13+" />
+  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" alt="Python 3.13" />
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
+  </a>
+</p>
+
+---
+
+Embeds a signed Python 3.13 interpreter (via [BeeWare Python-Apple-support](https://github.com/beeware/python-apple-support)) so macOS apps can run `cfabric` corpus queries natively — including App Store distribution.
 
 ## Requirements
 
@@ -42,7 +66,7 @@ let fabric = try Fabric(path: "/path/to/corpus")
 
 ```swift
 // Value of a feature for a specific node
-let pos: FeatureValue? = fabric.F["pos"].value(of: node)   // .string("verb")
+let pos: FeatureValue? = fabric.F["pos"].value(of: node)      // .string("verb")
 let num: FeatureValue? = fabric.F["g_word_n"].value(of: node) // .int(42)
 
 // All nodes where a feature equals a value
@@ -88,7 +112,7 @@ let text: String = fabric.T.text(of: verseNode)
 let orig: String = fabric.T.text(of: wordNode, format: "text-orig-full")
 let span: String = fabric.T.text(of: [word1, word2, word3])
 
-// Section headings (e.g. ["Genesis", "1", "1"] for Gen 1:1)
+// Section headings  (e.g. ["Genesis", "1", "1"] for Gen 1:1)
 let heading: [String] = fabric.T.section(from: wordNode)
 let node:    Node?    = fabric.T.node(from: ["Genesis", "1", "1"])
 ```
@@ -156,6 +180,12 @@ swift build
 swift test
 swift test --filter ContextFabricKitTests.<TestName>
 ```
+
+## Credits
+
+ContextFabricKit is a Swift wrapper around **[Context Fabric](https://github.com/Context-Fabric/context-fabric)**, created by [Cody Kingham](https://github.com/codykingham) — an AI-native corpus engine for annotated text, compatible with 35+ Text-Fabric datasets.
+
+Context Fabric is itself the next evolution of **[Text-Fabric](https://github.com/annotation/text-fabric)** by [Dirk Roorda](https://github.com/dirkroorda), which pioneered graph-based corpus linguistics tooling.
 
 ## License
 
