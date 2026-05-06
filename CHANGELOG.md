@@ -4,6 +4,13 @@ All notable changes to ContextFabricKit are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1](https://github.com/Mannydefreitas7/ContextFabricKit/compare/v0.1.0...v0.1.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* add .git extension to PythonKit dependency URL ([44cfd42](https://github.com/Mannydefreitas7/ContextFabricKit/commit/44cfd42fc7a53cfa1803cf72c1e125a71c46c894))
+
 ## [Unreleased]
 
 ### Added
