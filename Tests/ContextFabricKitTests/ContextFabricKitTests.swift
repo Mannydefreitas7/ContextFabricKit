@@ -52,7 +52,7 @@ struct FeatureValueTests {
 
 // MARK: - Fabric integration (requires `make bootstrap`)
 //
-// Corpus: Syriac Peshitta sample (Tests/Samples/tf/0.1/)
+// Corpus: Syriac Peshitta sample (Tests/Samples/Peshitta/0.1/)
 // Node layout:
 //   word   1–427227   (427 227 words)
 //   book   427228–427292  (65 books, first = Genesis)
@@ -81,7 +81,7 @@ struct FabricIntegrationTests {
         ).path
 
     static let samplePath: String = packageRoot
-        .appendingPathComponent("Tests/Samples/tf/0.1")
+        .appendingPathComponent("Tests/Samples/Peshitta/0.1")
         .path
 
     // The corpus is large (~430k nodes). Load it once per test run rather than
@@ -107,6 +107,17 @@ struct FabricIntegrationTests {
 
     @Test func loadsCorpus() {
         // init() succeeding without throwing is the assertion.
+    }
+
+    @Test func cfmCacheExistsAfterLoad() {
+        // cfabric compiles .tf data into an optimized binary format under .cfm/1/.
+        // Verify all four expected subdirectories are present after Fabric(path:) succeeds.
+        let cfm = URL(fileURLWithPath: Self.samplePath).appendingPathComponent(".cfm/1")
+        let fm = FileManager.default
+        #expect(fm.fileExists(atPath: cfm.path))
+        for subdir in ["warp", "features", "edges", "computed"] {
+            #expect(fm.fileExists(atPath: cfm.appendingPathComponent(subdir).path))
+        }
     }
 
     // Note: testing Fabric.init with a bad path is excluded from this suite because
