@@ -24,12 +24,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Artifacts/Python.xcframework
-          key: python-xcframework-3.13-b13
+          key: python-xcframework-cfabric-3.13-b13
 
-      # On cache miss: download (~100 MB) and extract. No signing needed for CI.
+      # On cache miss: extract and install cfabric into the embedded site-packages.
+      # Both steps are cached together so cfabric is available on cache hit too.
       - name: Extract Python.xcframework
         if: steps.cache-xcframework.outputs.cache-hit != 'true'
         run: make extract
+
+      - name: Install cfabric into embedded interpreter
+        if: steps.cache-xcframework.outputs.cache-hit != 'true'
+        run: make install-cfabric
 
       - name: Build
         run: swift build

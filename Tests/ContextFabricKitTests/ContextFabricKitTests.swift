@@ -1,49 +1,51 @@
 import Testing
+import Foundation
 @testable import ContextFabricKit
 
-struct ContextFabricKitTests {
+// MARK: - FeatureValue (no corpus required)
 
-    // MARK: - FeatureValue
+struct FeatureValueTests {
 
-    @Test func featureValueStringDescription() {
+    @Test func stringDescription() {
         #expect(FeatureValue.string("verb").description == "verb")
-        #expect(FeatureValue.string("verb").stringValue == "verb")
-        #expect(FeatureValue.string("verb").intValue == nil)
     }
 
-    @Test func featureValueIntDescription() {
+    @Test func intDescription() {
         #expect(FeatureValue.int(42).description == "42")
-        #expect(FeatureValue.int(42).intValue == 42)
-        #expect(FeatureValue.int(42).stringValue == nil)
     }
 
-    @Test func featureValueEquality() {
+    @Test func zeroIntDescription() {
+        #expect(FeatureValue.int(0).description == "0")
+    }
+
+    @Test func negativeIntDescription() {
+        #expect(FeatureValue.int(-1).description == "-1")
+    }
+
+    @Test func emptyStringDescription() {
+        #expect(FeatureValue.string("").description == "")
+    }
+
+    @Test func unicodeStringDescription() {
+        #expect(FeatureValue.string("ܒܪܫܝܬ").description == "ܒܪܫܝܬ")
+    }
+
+    @Test func stringValue() {
+        #expect(FeatureValue.string("noun").stringValue == "noun")
+        #expect(FeatureValue.int(1).stringValue == nil)
+    }
+
+    @Test func intValue() {
+        #expect(FeatureValue.int(99).intValue == 99)
+        #expect(FeatureValue.int(0).intValue == 0)
+        #expect(FeatureValue.string("x").intValue == nil)
+    }
+
+    @Test func equality() {
         #expect(FeatureValue.string("noun") == FeatureValue.string("noun"))
         #expect(FeatureValue.int(1) == FeatureValue.int(1))
         #expect(FeatureValue.string("1") != FeatureValue.int(1))
+        #expect(FeatureValue.string("a") != FeatureValue.string("b"))
+        #expect(FeatureValue.int(0) != FeatureValue.int(1))
     }
-
-    // MARK: - PythonRuntime
-
-    @Test func runtimeInitializeIsIdempotent() {
-        // Repeated calls must not crash. Requires `make bootstrap` to have been run;
-        // pass an explicit pythonHome path if running outside an app bundle.
-        // PythonRuntime.initialize(pythonHome: "/path/to/Python.framework/Versions/3.13")
-    }
-
-    // MARK: - Fabric (requires a real corpus — skipped in CI)
-    //
-    // To run locally, replace the path with a valid cfabric corpus directory and
-    // uncomment the tests below.
-    //
-    // @Test func fabricLoadsCorpus() async throws {
-    //     let fabric = try Fabric(path: "/path/to/corpus")
-    //     #expect(fabric.loadedFeatureNames().contains("otype"))
-    // }
-    //
-    // @Test func fabricNodesOfType() async throws {
-    //     let fabric = try Fabric(path: "/path/to/corpus")
-    //     let words = fabric.nodes(ofType: "word")
-    //     #expect(!words.isEmpty)
-    // }
 }
