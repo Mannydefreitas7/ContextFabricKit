@@ -66,18 +66,28 @@ public final class TextNamespace {
     ///   - lang: Two-letter language code (default `"en"`).
     /// - Returns: The matching node, or `nil` if not found.
     public func node(from section: [String], lang: String = "en") -> Node? {
-        // cfabric's internal section dictionaries key on the feature's declared valueType
-        // ("int" or "str"). T.sectionFeatureTypes records the type per section level so we
-        // can pass each label as the right Python type for a successful dict lookup.
-        let featureTypes = py.checking.sectionFeatureTypes  // PythonObject? list of "int"/"str"
+        // cfabric keys its internal section dicts on the feature's declared dataType ("int"/"str").
+        // sectionFeatureTypes is unreliable on first .tf load (defaults all to "str") because
+        // .tf headers use "valueType" (camelCase) while cfabric reads "value_type" (snake_case).
+        // api.CF.features[fname].dataType is always correct regardless of load path.
+        let sectionFeats = Array<PythonObject>(py.sectionFeats) ?? []
+        let cfFeatures: PythonObject? = {
+            guard let api = py.checking.api else { return nil }
+            guard let cf = api.checking.CF else { return nil }
+            return cf.checking.features
+        }()
         let pySection = PythonObject(section.enumerated().map { i, s -> PythonObject in
-            let isInt: Bool
-            if let types = featureTypes, let typeStr = String(types[PythonObject(i)]) {
-                isInt = typeStr == "int"
-            } else {
-                isInt = Int(s) != nil  // fallback for corpora that don't expose sectionFeatureTypes
+            guard let intVal = Int(s) else { return PythonObject(s) }
+            var isInt = true
+            if i < sectionFeats.count, let cfFeatures = cfFeatures {
+                let fname = sectionFeats[i]
+                let fObj = cfFeatures.get(fname, Python.None)
+                if fObj != Python.None,
+                   let dt = fObj.checking.dataType.flatMap({ String($0) }) {
+                    isInt = dt == "int"
+                }
             }
-            return isInt ? (Int(s).map { PythonObject($0) } ?? PythonObject(s)) : PythonObject(s)
+            return isInt ? PythonObject(intVal) : PythonObject(s)
         })
         let result = py.nodeFromSection(pySection, lang: PythonObject(lang))
         return result == Python.None ? nil : Int(result)

@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `cfmCacheExistsAfterLoad` test verifies the `.cfm/1` binary cache is generated after `Fabric(path:)` succeeds.
 
 ### Fixed
-- `T.node(from:)` now reads `T.sectionFeatureTypes` from cfabric to cast each section label to the correct Python type (`int` vs `str`) per corpus, fixing round-trip lookups on corpora with mixed section feature types (e.g. Descartes: int volume `n`, string letter `id`).
+- `T.node(from:)` now reads `api.CF.features[fname].dataType` to cast each section label to the correct Python type (`int` vs `str`) per corpus, fixing round-trip lookups on corpora with mixed section feature types (e.g. Descartes: int volume `n`, string letter `id`). The previous `sectionFeatureTypes` approach defaulted all types to `"str"` on first `.tf` load because cfabric reads `"value_type"` (snake_case) while `.tf` headers store `"valueType"` (camelCase).
 - `EdgeFeature.from(_:)` uses `s(n)` for `OslotsFeature` and `f(n)` for regular edge features, preventing a fatal member-not-found crash when accessing `oslots` via `E["oslots"].from(_:)`.
 - `EdgeFeature.to(_:)` returns `[]` for `OslotsFeature` (which has no reverse method); `EdgeFeature.bidirectional(_:)` falls back to `from(_:)`.
 - `EdgeFeature.hasValues` uses the safe `.checking` accessor so it does not crash on `OslotsFeature`, which lacks a `doValues` attribute.
