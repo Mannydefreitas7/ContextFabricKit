@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "ContextFabricKit", targets: ["ContextFabricKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pvieito/PythonKit", from: "0.3.0"),
+        .package(url: "https://github.com/pvieito/PythonKit.git", from: "0.3.0"),
     ],
     targets: [
         // Python.xcframework downloaded and staged by `make bootstrap`.
