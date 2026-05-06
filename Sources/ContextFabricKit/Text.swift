@@ -66,10 +66,18 @@ public final class TextNamespace {
     ///   - lang: Two-letter language code (default `"en"`).
     /// - Returns: The matching node, or `nil` if not found.
     public func node(from section: [String], lang: String = "en") -> Node? {
-        // Chapter and verse labels may be integer-typed in the corpus — parse numeric
-        // strings to Python ints so the internal dict lookup succeeds.
-        let pySection = PythonObject(section.map { s -> PythonObject in
-            Int(s).map { PythonObject($0) } ?? PythonObject(s)
+        // cfabric's internal section dictionaries key on the feature's declared valueType
+        // ("int" or "str"). T.sectionFeatureTypes records the type per section level so we
+        // can pass each label as the right Python type for a successful dict lookup.
+        let featureTypes = py.checking.sectionFeatureTypes  // PythonObject? list of "int"/"str"
+        let pySection = PythonObject(section.enumerated().map { i, s -> PythonObject in
+            let isInt: Bool
+            if let types = featureTypes, let typeStr = String(types[PythonObject(i)]) {
+                isInt = typeStr == "int"
+            } else {
+                isInt = Int(s) != nil  // fallback for corpora that don't expose sectionFeatureTypes
+            }
+            return isInt ? (Int(s).map { PythonObject($0) } ?? PythonObject(s)) : PythonObject(s)
         })
         let result = py.nodeFromSection(pySection, lang: PythonObject(lang))
         return result == Python.None ? nil : Int(result)
