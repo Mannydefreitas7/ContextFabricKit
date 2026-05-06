@@ -104,33 +104,47 @@ public final class EdgeFeature {
 
     /// Whether this edge feature carries values (as opposed to pure connectivity).
     public var hasValues: Bool {
-        Bool(py.doValues) ?? false
+        // Use .checking to safely handle cfabric versions that don't expose doValues.
+        (py.checking.doValues).flatMap { Bool($0) } ?? false
     }
 
     /// Destination nodes for edges departing `node`.
+    /// For `oslots` (OslotsFeature), uses `s(n)` — returns slot nodes, or `(n,)` for slot nodes.
     public func from(_ node: Node) -> [Node] {
-        extractNodes(py.f(PythonObject(node)))
+        let pyNode = PythonObject(node)
+        if py.checking.f != nil {
+            return extractNodes(py.f(pyNode))
+        }
+        return extractNodes(py.s(pyNode))
     }
 
     /// Origin nodes for edges arriving at `node`.
+    /// Returns empty for `oslots` — OslotsFeature has no reverse method; use `L.up()` instead.
     public func to(_ node: Node) -> [Node] {
-        extractNodes(py.t(PythonObject(node)))
+        guard py.checking.t != nil else { return [] }
+        return extractNodes(py.t(PythonObject(node)))
     }
 
     /// All nodes connected to `node` in either direction.
+    /// For `oslots`, falls back to `from(_:)` since there is no `b(n)` method.
     public func bidirectional(_ node: Node) -> [Node] {
-        extractNodes(py.b(PythonObject(node)))
+        guard py.checking.b != nil else { return from(node) }
+        return extractNodes(py.b(PythonObject(node)))
     }
 
     /// Destination nodes and edge values for edges departing `node`.
     /// Edge value is `nil` for unvalued edges.
     public func valuesFrom(_ node: Node) -> [(Node, FeatureValue?)] {
-        extractValued(py.f(PythonObject(node)))
+        if py.checking.f == nil {
+            return from(node).map { ($0, nil) }
+        }
+        return extractValued(py.f(PythonObject(node)))
     }
 
     /// Origin nodes and edge values for edges arriving at `node`.
     public func valuesTo(_ node: Node) -> [(Node, FeatureValue?)] {
-        extractValued(py.t(PythonObject(node)))
+        guard py.checking.t != nil else { return [] }
+        return extractValued(py.t(PythonObject(node)))
     }
 
     // Handles both unvalued (tuple[int,...]) and valued (tuple[(int,Any),...]) returns.

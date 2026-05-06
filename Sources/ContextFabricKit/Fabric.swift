@@ -28,7 +28,7 @@ public enum FeatureValue: Sendable, Equatable, CustomStringConvertible {
     }
 }
 
-public enum ContextFabricError: Error {
+public enum ContextFabricError: Error, Equatable {
     case loadFailed(path: String)
 }
 
@@ -75,17 +75,34 @@ public final class Fabric {
     public init(path: String) throws {
         PythonRuntime.initialize()
         let cfabric = Python.import("cfabric")
-        let result = cfabric.Fabric(path).loadAll()
-        guard result != Python.False else {
-            throw ContextFabricError.loadFailed(path: path)
-        }
-        api = result
-        F = FeatureNamespace(result.F)
-        E = EdgeNamespace(result.E)
-        L = LocalityNamespace(result.L)
-        T = TextNamespace(result.T)
-        S = SearchNamespace(result.S)
-        N = NodesNamespace(result.N)
+        // Use PythonKit's `.throwing` API so Python exceptions surface as Swift errors
+        // rather than crashing via `fatalError`.
+        api = try {
+            do {
+                // Fabric.__init__ only sets up state; the actual file I/O (and any
+                // Python exceptions) happens inside loadAll(). Use .throwing so
+                // OSErrors and other Python exceptions surface as Swift errors
+                // rather than crashing via fatalError.
+                let pyFabric = cfabric.Fabric(path)
+                // .throwing is callable but has no dynamic member lookup, so
+                // retrieve the bound method first, then dispatch via throwing.
+                let result = try pyFabric.loadAll.throwing.dynamicallyCall(withArguments: [])
+                guard result != Python.False else {
+                    throw ContextFabricError.loadFailed(path: path)
+                }
+                return result
+            } catch let e as ContextFabricError {
+                throw e
+            } catch {
+                throw ContextFabricError.loadFailed(path: path)
+            }
+        }()
+        F = FeatureNamespace(api.F)
+        E = EdgeNamespace(api.E)
+        L = LocalityNamespace(api.L)
+        T = TextNamespace(api.T)
+        S = SearchNamespace(api.S)
+        N = NodesNamespace(api.N)
     }
 
     // MARK: Corpus introspection
