@@ -33,7 +33,16 @@
       "Bash(sed -n '5614,5621p' /tmp/PackageList/packages.json)",
       "Bash(python3 -c \"import json; json.load\\(open\\('packages.json'\\)\\); print\\('JSON valid ✓'\\)\")",
       "Bash(echo \"Exit: $?\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(curl -s \"https://api.github.com/repos/Mannydefreitas7/descartes-tf/contents/tf/1.1?ref=8967dcff5f633f20bf8149bb6657ba47d05f8c89\")",
+      "Bash(python3 -c \"import json,sys; [print\\(f['name']\\) for f in json.load\\(sys.stdin\\)]\")",
+      "Bash(curl -s \"https://api.github.com/repos/Mannydefreitas7/peshitta/contents/tf/0.2?ref=9850f5addade26f681334aa475570bef9b0b440a\")",
+      "Bash(curl *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(git -C /Users/emmanuel/projects/ContextFabricKit log --oneline -10)",
+      "Bash(git -C /Users/emmanuel/projects/ContextFabricKit log --oneline)",
+      "Bash(git -C /Users/emmanuel/projects/ContextFabricKit log --format=\"%H %s\")",
+      "Bash(git *)"
     ]
   }
 }
