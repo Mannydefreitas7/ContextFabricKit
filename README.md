@@ -20,6 +20,9 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
   </a>
+  <a href="https://github.com/Mannydefreitas7/ContextFabricKit/actions/workflows/ci.yml">
+    <img src="https://github.com/Mannydefreitas7/ContextFabricKit/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
 </p>
 
 ---
